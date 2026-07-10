@@ -55,4 +55,48 @@ counts <- as.data.frame(counts)
 head(counts)
 counts[,1]
 rownames(counts) <- counts[,1]
-counts[,-1]
+counts <- counts[,-1]
+dim(counts)
+
+# ===============================
+#   Langkah 3: Membuat Metadata
+# ===============================
+colnames(counts)
+
+sample_names <- colnames(counts)
+condition <- c("DMSO", "DMSO", "DTG", "DTG", "DTG", "DMSO")
+
+metadata <- data.frame(
+  sample    = sample_names,
+  condition = condition 
+)
+
+rownames(metadata) <- sample_names
+
+print(metadata)
+
+#  Verifikasi dengan
+#  colnames(counts) == rownames(metadata)
+colnames(counts) == rownames(metadata)
+
+# ===============================
+#   Langkah 4: Distribusi Data
+# ===============================
+# 1. Load library untuk visualisasi
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+# 2. Ubah data ke format panjang (long format) untuk ggplot
+counts_long <- counts %>% 
+  as.data.frame() %>% mutate(gene = rownames(.)) %>%
+  pivot_longer(cols = -gene, names_to = "sample", values_to = "count")
+
+# 3. Boxplot (dalam skala log2 agar lebih jelas)
+ggplot(counts_long, aes(x=sample, y=log2(count+1), fill = sample)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs( title="Distribusi Ekspresi Gen per Sampel (Data Mentah)", 
+        x = "Sampel",
+        y = "Log2(count+1)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
