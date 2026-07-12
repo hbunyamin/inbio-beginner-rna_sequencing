@@ -100,3 +100,60 @@ ggplot(counts_long, aes(x=sample, y=log2(count+1), fill = sample)) +
         x = "Sampel",
         y = "Log2(count+1)") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# ===================================================
+#   Filter Gen dengan Reads Rendah (Optional)
+# ===================================================
+# 1. Filter: gen dengan total reads >= 10 di semua sampel
+keep <- rowSums(counts) >= 10
+counts_filtered <- counts[keep,]
+
+# 2. Bandingkan jumlah gen sebelum dan sesudah filter
+dim(counts)
+dim(counts_filtered)
+
+# ======================================
+#   Langkah 5: Korelasi Antar Sampel
+# ======================================
+# 1. Load pheatmap
+library(pheatmap)
+
+# 2. Hitung korelasi antar sampel (pakai data yang sudah difilter)
+cor_matrix <- cor(counts_filtered)
+
+# 3. Tampilkan sebagai heatmap
+pheatmap(cor_matrix, 
+         main = "Korelasi Antar Sampel (Data Mentah)",
+         display_numbers = TRUE,
+         number_format = "%.2f",
+         color = colorRampPalette(c("blue", "white", "red"))(50))
+
+# ======================================
+#   Langkah 6: PCA 
+# ======================================
+# 1. PCA dengan data yang sudah di-log (karena data counts sangat skewed)
+log_data <- log2(counts_filtered + 1)
+pca_result <- prcomp(t(log_data), scale=TRUE)
+pca_result
+pca_result[2]
+
+# 2. Buat data frame untuk plotting
+pca_df <- data.frame(
+  PC1 = pca_result$x[,1],
+  PC2 = pca_result$x[,2],
+  condition = metadata$condition
+  
+)
+head(pca_df)
+
+# 3. Hitung persentase varians
+var_explained <- summary(pca_result)$importance[2,1:2]*100
+
+# 4. Plot PCA
+ggplot(pca_df, aes(x=PC1, y=PC2, colour = condition)) +
+  geom_point(size=5) +
+  theme_minimal() +
+  labs( title = "PCA Plot(Data Mentah - Log2)", 
+        x = paste0("PC1:", round(var_explained[1], 1), "% variance"),
+        y = paste0("PC2:", round(var_explained[2], 1), "% variance"))+
+  theme(legend.position = "bottom")      
