@@ -306,5 +306,14 @@ res_df$label <- ifelse(rownames(res_df) %in%
                          rownames(top_genes), rownames(res_df), "")
 
 # 3. Buat volcano plot dengan label
-#volcano_plot_labeled <- ggplot(res_df, aes(x=log2FoldChange, y = -log10(padj), color=direction))+
+volcano_plot_labeled <- ggplot(res_df, aes(x=log2FoldChange, y = -log10(padj), color=direction))+
+  geom_point(alpha = 0.6, size=1.5) +
+  scale_color_manual(values=c("Naik" = "red", "Turun" = "blue", "Tidak signifikan"="gray" ),
+                     name="Regulasi") +
+  geom_vline(xintercept = c(-1,1), linetype="dashed", color="black", alpha=0.5) +
+  geom_hline(yintercept = -log10(0.05), linetype="dashed", color="black", alpha=0.5) +
+  geom_text(aes(label=label), vjust=-0.5, size=3, check_overlap = TRUE) +
+  labs(
+    title = "Volcano Plot: DTG vs DMSO "
+  )
   
