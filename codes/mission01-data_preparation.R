@@ -26,8 +26,11 @@ getGEOSuppFiles("GSE285595")
 # ===============================
 # 1. Ambil data ekspresi dan metadata dari series matrix
 gse_data <- gse[[1]]
+gse_data
 expression_data <-exprs(gse_data)
+expression_data
 metadata <- pData(gse_data)
+metadata
 
 # 2. Cek struktur datanya
 metadata[1]
@@ -314,6 +317,53 @@ volcano_plot_labeled <- ggplot(res_df, aes(x=log2FoldChange, y = -log10(padj), c
   geom_hline(yintercept = -log10(0.05), linetype="dashed", color="black", alpha=0.5) +
   geom_text(aes(label=label), vjust=-0.5, size=3, check_overlap = TRUE) +
   labs(
-    title = "Volcano Plot: DTG vs DMSO "
+    title = "Volcano Plot: DTG vs DMSO (Top 10 Gen)",
+    x = "Log2 Fold Change",
+    y = "-Log10 Adjusted P-value"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(hjust = 0.5, face="bold")
   )
   
+print(volcano_plot_labeled)
+ggsave("volcano_plot_labeled.png", volcano_plot_labeled, width = 10, 
+       height = 7, dpi = 300)
+
+# =========================
+# Langkah 2: Heatmap
+# =========================
+library(pheatmap)
+library(DESeq2)
+
+# 1. Ambil top 30 gen signifikan (berdasarkan padj)
+res_sorted <- res[order(res$padj),]
+top_genes <- rownames(res_sorted)[!is.na(res_sorted$padj)][1:30]
+
+# 2. Ambil data ekspresi untuk gen-gen tersebut (dari rlog)
+heatmap_data <- assay(rld)[top_genes,]
+
+# 3. Buat annotation untuk sampel (warna berdasarkan kondisi)
+annotation_col <- data.frame(
+  Condition = metadata$condition
+)
+rownames(annotation_col) <- colnames(heatmap_data)
+
+# 4. Buat heatmap
+heatmap_plot <- pheatmap(
+  heatmap_data,
+  scale = "row",
+  main = "Heatmap Top 30 DEG",
+  clustering_distance_rows = "correlation",
+  clustering_distance_cols = "correlation",
+  clustering_method = "complete",
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 8,
+  annotation_col = annotation_col,
+  color = colorRampPalette(c("blue", "white", "red"))(50),
+  border_color = NA
+)
+
