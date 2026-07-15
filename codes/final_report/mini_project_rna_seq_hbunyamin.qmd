@@ -1,8 +1,22 @@
 ---
-title: "final_report_rna_seq_hbunyamin"
+title: "Mini Project: XXXXX"
+author: "Hendra Bunyamin"
 format: pdf
 editor: visual
+execute: 
+  fig-width: 9
+  fig-asp: 0.618
+  out-width: "70%"
+  fig-align: center
+  warning: false
 ---
+
+```{r}
+#| message: false
+library(DESeq2)
+library(ggplot2)
+
+```
 
 # Judulnya
 
