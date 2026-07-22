@@ -1,8 +1,10 @@
 ---
-title: "Mini Project: XXXXX"
+title: "Differential Expression Analysis of GSE315344"
+subtitle: "Transcriptomic Responses to ZL0580 and JQ1 in HIV-Latent J-Lat Cells"
 author: "Hendra Bunyamin"
 format: pdf
 editor: visual
+cache: true
 execute: 
   fig-width: 9
   fig-asp: 0.618
@@ -13,10 +15,16 @@ execute:
 
 ```{r}
 #| message: false
+#| label: setup
 library(DESeq2)
 library(ggplot2)
-
+library(pheatmap)
+library(GEOquery)
+library(dplyr)
+library(tidyr)
 ```
+
+
 
 # Judulnya
 

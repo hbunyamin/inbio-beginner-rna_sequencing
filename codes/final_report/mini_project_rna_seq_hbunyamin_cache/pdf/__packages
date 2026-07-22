@@ -1,0 +1,16 @@
+generics
+BiocGenerics
+S4Vectors
+IRanges
+Seqinfo
+GenomicRanges
+matrixStats
+MatrixGenerics
+Biobase
+SummarizedExperiment
+DESeq2
+ggplot2
+pheatmap
+GEOquery
+dplyr
+tidyr
