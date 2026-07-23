@@ -4,7 +4,6 @@ subtitle: "Transcriptomic Responses to ZL0580 and JQ1 in HIV-Latent J-Lat Cells"
 author: "Hendra Bunyamin"
 format: pdf
 editor: visual
-cache: true
 execute: 
   fig-width: 9
   fig-asp: 0.618
