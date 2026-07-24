@@ -167,9 +167,6 @@ counts_filtered_variable <- counts_filtered[row_var > 0, ]
 log_data <- log2(counts_filtered_variable + 1)
 pca_result <- prcomp(t(log_data), scale = TRUE)
 
-pca_result
-pca_result[2]
-
 # 2. Buat data frame untuk plotting
 pca_df <- data.frame(
   PC1 = pca_result$x[,1],
@@ -469,76 +466,76 @@ heatmap_plot <- pheatmap(
 ```
 
 
-```{r}
-# ========================================
-#    Part II : JQ1 dan DMSO
-# ========================================
+<!-- ```{r} -->
+<!-- # ======================================== -->
+<!-- #    Part II : JQ1 dan DMSO -->
+<!-- # ======================================== -->
 
-# ======================
-# Langkah 1: DESeq2
-# ======================
-# 1. Membuat object dds
-dds <- DESeqDataSetFromMatrix(
-  countData = counts_filtered,
-  colData = metadata,
-  design = ~condition
-)
+<!-- # ====================== -->
+<!-- # Langkah 1: DESeq2 -->
+<!-- # ====================== -->
+<!-- # 1. Membuat object dds -->
+<!-- dds <- DESeqDataSetFromMatrix( -->
+<!--   countData = counts_filtered, -->
+<!--   colData = metadata, -->
+<!--   design = ~condition -->
+<!-- ) -->
 
-# 2. Jalankan DESeq2
-dds <- DESeq(dds)
-dds
-
-
-# 3. Ambil hasil perbandingan
-res <- results(dds, contrast = c("condition", "JQ1", "DMSO"))
-res <- res[order(res$padj),]
-head(res)
-
-# ======================
-# Langkah 2: Filter Gen
-# ======================
-# 1. Ubah data jadi format dataframe
-res_df <- as.data.frame(res)
-
-# 2. Tambahkan kolom status signifikansi
-res_df$significant <- ifelse(
-  !is.na(res_df$padj) & 
-    res_df$padj < 0.05 &
-    abs(res_df$log2FoldChange) > 1,
-  "Signifikan", 
-  "Tidak Signfikan"
-)
-
-# 3. Tambahkan kolom arah perubahan
-res_df$direction <- ifelse(
-  !is.na(res_df$padj) & res_df$padj < 0.05 & res_df$log2FoldChange >1, "Naik", 
-  ifelse(
-    !is.na(res_df$padj) & res_df$padj < 0.05 & res_df$log2FoldChange < -1, "Turun",
-    "Tidak Signifikan"))
+<!-- # 2. Jalankan DESeq2 -->
+<!-- dds <- DESeq(dds) -->
+<!-- dds -->
 
 
-# 4. Filter gen signifikan
-sig_genes <- res_df[res_df$significant == "Signifikan",]
-nrow(sig_genes)
+<!-- # 3. Ambil hasil perbandingan -->
+<!-- res <- results(dds, contrast = c("condition", "JQ1", "DMSO")) -->
+<!-- res <- res[order(res$padj),] -->
+<!-- head(res) -->
 
-# 5. Lihat gen naik dan turun
-table(sig_genes$direction)
-```
+<!-- # ====================== -->
+<!-- # Langkah 2: Filter Gen -->
+<!-- # ====================== -->
+<!-- # 1. Ubah data jadi format dataframe -->
+<!-- res_df <- as.data.frame(res) -->
 
-```{r}
-# =========================
-# Langkah 3: Export Hasil
-# =========================
-# 1. Export hasil
-write.csv(res_df, "DEG_results_GSE315344_JQ1_vs_DMSO.csv")
+<!-- # 2. Tambahkan kolom status signifikansi -->
+<!-- res_df$significant <- ifelse( -->
+<!--   !is.na(res_df$padj) &  -->
+<!--     res_df$padj < 0.05 & -->
+<!--     abs(res_df$log2FoldChange) > 1, -->
+<!--   "Signifikan",  -->
+<!--   "Tidak Signfikan" -->
+<!-- ) -->
 
-# 2. Lihat top 10 gen naik
-top_up <- head(res_df[res_df$direction == "Naik",c("log2FoldChange", "pvalue", "padj")], 10)
-print(top_up)
+<!-- # 3. Tambahkan kolom arah perubahan -->
+<!-- res_df$direction <- ifelse( -->
+<!--   !is.na(res_df$padj) & res_df$padj < 0.05 & res_df$log2FoldChange >1, "Naik",  -->
+<!--   ifelse( -->
+<!--     !is.na(res_df$padj) & res_df$padj < 0.05 & res_df$log2FoldChange < -1, "Turun", -->
+<!--     "Tidak Signifikan")) -->
 
-  
-# 3. Lihat top 10 gen turun
-top_down <- head(res_df[res_df$direction == "Turun", 
-                        c("log2FoldChange", "pvalue", "padj")], 10)
-print(top_down)
-```
+
+<!-- # 4. Filter gen signifikan -->
+<!-- sig_genes <- res_df[res_df$significant == "Signifikan",] -->
+<!-- nrow(sig_genes) -->
+
+<!-- # 5. Lihat gen naik dan turun -->
+<!-- table(sig_genes$direction) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- # ========================= -->
+<!-- # Langkah 3: Export Hasil -->
+<!-- # ========================= -->
+<!-- # 1. Export hasil -->
+<!-- write.csv(res_df, "DEG_results_GSE315344_JQ1_vs_DMSO.csv") -->
+
+<!-- # 2. Lihat top 10 gen naik -->
+<!-- top_up <- head(res_df[res_df$direction == "Naik",c("log2FoldChange", "pvalue", "padj")], 10) -->
+<!-- print(top_up) -->
+
+
+<!-- # 3. Lihat top 10 gen turun -->
+<!-- top_down <- head(res_df[res_df$direction == "Turun",  -->
+<!--                         c("log2FoldChange", "pvalue", "padj")], 10) -->
+<!-- print(top_down) -->
+<!-- ``` -->
