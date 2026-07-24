@@ -1,6 +1,6 @@
 ---
-title: "Differential Expression Analysis of GSE315344"
-subtitle: "Transcriptomic Responses to ZL0580 and JQ1 in HIV-Latent J-Lat Cells"
+title: "Analisis Differential Expression dari GSE315344"
+subtitle: "Respons Transkriptomik terhadap ZL0580 dan JQ1 dalam Sel J-Lat"
 author: "Hendra Bunyamin"
 format: pdf
 editor: visual
@@ -12,6 +12,8 @@ execute:
   warning: false
 ---
 
+Mari kita import semua *libraries* yang dibutuhkan.
+
 ```{r}
 #| message: false
 #| label: setup
@@ -21,31 +23,522 @@ library(pheatmap)
 library(GEOquery)
 library(dplyr)
 library(tidyr)
+library(readxl)
 ```
 
+Bayangkan virus *human immunodeficiency* (HIV) sebagai penjahat berbahaya yang telah menyusup ke dalam sebuah rumah--dalam hal ini, sel-sel tubuh. Biasanya, sistem kekebalan bertindak seperti pasukan keamanan yang waspada, yang mampu mendeteksi dan melenyapkan penyerang semacam itu. Namun, HIV memiliki trik yang sangat licik: ia bisa masuk ke "mode sembunyi". Setelah menginfeksi sel, virus ini menyisipkan instruksi genetiknya langsung ke dalam DNA sel inang, secara efektif menyimpan cetak birunya ke dalam perpustakaan pusat sel tersebut. Begitu berada di sana, virus ini menjadi sepenuhnya diam--tidak memproduksi protein virus, tidak membuat salinan dirinya sendiri, dan tidak memicu alarm apa pun. Virus tersebut masih ada, bersembunyi di dalam genom, tetapi tetap tidak terlihat oleh sistem kekebalan tubuh maupun obat antivirus standar. Keadaan diam dan tidak aktif ini dikenal sebagai **laten virus**, dan hal ini merupakan tantangan terbesar dalam upaya memberantas HIV dari tubuh.
+
+Para ilmuwan sedang berusaha menemukan obat untuk HIV, tetapi mereka tidak bisa begitu saja membasmi virus yang tersembunyi itu karena mereka tidak bisa menemukannya. Terdapat dua strategi utama untuk membasmi virus yang tersembunyi ini, yaitu:
+
+- "*Shock and kill*" $\Rightarrow$ membangunkan virus agar sistem kekebalan tubuh atau obat-obatan dapat mendeteksinya dan menghancurkannya.
+- "*Block and lock*" $\Rightarrow$ menjaga agar virus tetap tertidur selamanya, sehingga tidak akan pernah bangun lagi untuk menimbulkan masalah.
+
+Dalam percobaan ini ([GSE315344](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE315344)), para ilmuwan meneliti dua obat berbeda yang memengaruhi HIV dengan cara yang berlawanan:
+
+- **JQ1** $\Rightarrow$ Obat ini berfungsi seperti "panggilan bangun". Obat ini memaksa HIV yang tersembunyi untuk mengaktifkan gen-gennya dan mulai membuat salinan dirinya sendiri. Hal ini berguna untuk strategi "*shock and kill*".
+
+- **ZL0580** $\Rightarrow$ Obat ini bekerja sebaliknya. Obat ini bertindak seperti "obat tidur". Obat ini mendorong virus untuk tetap tertidur lelap dan membuatnya jauh lebih sulit bagi virus untuk bangun kembali. Hal ini berguna untuk strategi "block and lock".
+
+Berikut ini yang dilakukan para ilmuwan dalam percobaan ([GSE315344](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE315344)) ini:
+
+- Mereka mengambil jenis sel manusia spesifik mengandung HIV yang tersembunyi dan dalam keadaan tidak aktif ke dalam cawan laboratorium. Jenis sel ini disebut <u>J-Lat</u>.    
+- Mereka membagi sel-sel ini menjadi tiga kelompok:
+    - Kelompok 1 diberi cairan yang tidak berbahaya (**DMSO**) $\Rightarrow$ ini adalah kelompok pembanding yang "tidak diberi perlakuan apa pun".
+    - Kelompok 2 diberi obat pengaktif (**JQ1**).
+    - Kelompok 3 diberi obat penidur (**ZL0580**).
+     
+Setelah 24 jam, mereka menggunakan mesin berteknologi tinggi untuk membaca setiap gen aktif dalam sel-sel tersebut. Ini seperti mengambil foto instan dari "halaman" mana dalam buku petunjuk sel yang sedang dibaca pada saat itu. Proses ini disebut sekuensing RNA (**RNA sequencing**). 
+
+Tujuan proyek ini adalah menganalisis **RNA sequencing** pada dataset genomik dengan kode [GSE315344](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE315344). Analisis ini mencakup beberapa langkah (_mission_), yaitu:
+
+1. _Data preparation_
+2. _Normalization_
+3. _Differential Gene Expression (DEG) Analysis_
+4. _Visualization_
+
+# Mission 01: Data Preparation
+
+Mari kita baca data _raw counts_ dan kita simpan ke variabel `counts`.
+```{r}
+# Read the file 'GSE315344_counts.xlsx' from your working directory
+counts <- read_excel("GSE315344_raw_counts.xlsx")
+counts <- as.data.frame(counts)
+```
+
+Kita tampilkan jumlah baris dan kolom dari `counts`.
+```{r}
+rownames(counts) <- counts[,1]
+counts <- counts[,-1]
+dim(counts)
+```
+`25610` menunjukkan jumlah gen yang ada dan `6` menunjukkan jumlah sampel yang ada. Kondisi sampel-sampel ini meliputi **2 DMSO**, **2 JQ1**, dan **ZL0580**.    
+   
+Selanjutnya, mari kita buat metadata dari dataset ini.   
+```{r}
+# ==================================
+#  Langkah 3: Membuat Metadata
+# ==================================
+sample_names <- colnames(counts)
+sample_names
+condition <- c("DMSO", "DMSO", "ZL0580", "ZL0580", "JQ1", "JQ1" )
+
+metadata <- data.frame(
+  sample    = sample_names,
+  condition = condition
+)
+rownames(metadata) <- sample_names
+print(metadata)
+```
+
+Pastikan bahwa nama-nama sampel dari `counts` dan `metadata` adalah sama.
+```{r}
+colnames(counts) == rownames(metadata)
+```
+
+Kemudian kita akan mendistribusikan data-data ini dalam diagram box plot.
+```{r}
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+# 2. Ubah data ke format panjang (long format) untuk ggplot
+counts_long <- counts %>% 
+  as.data.frame() %>% mutate(gene = rownames(.)) %>%
+  pivot_longer(cols = -gene, names_to = "sample", values_to = "count")
+
+# 3. Boxplot (dalam skala log2 agar lebih jelas)
+ggplot(counts_long, aes(x=sample, y=log2(count+1), fill = sample)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs( title="Distribusi Ekspresi Gen per Sampel (Data Mentah)", 
+        x = "Sampel",
+        y = "Log2(count+1)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Mari kita coba filter gen dengan <u>jumlah reads yang rendah</u> dan bandingkan sebelum dan sesudah filter.
+```{r}
+# ===================================================
+#   Filter Gen dengan Reads Rendah (Optional)
+# ===================================================
+# 1. Filter: gen dengan total reads >= 10 di semua sampel
+keep <- rowSums(counts) >= 10
+counts_filtered <- counts[keep,]
+
+# 2. Bandingkan jumlah gen sebelum dan sesudah filter
+dim(counts)
+dim(counts_filtered)
+```
+
+Selanjutnya kita coba hitung korelasi antar sampel.
+```{r}
+# ======================================
+#   Langkah 5: Korelasi Antar Sampel
+# ======================================
+# 1. Load pheatmap
+library(pheatmap)
+
+# 2. Hitung korelasi antar sampel (pakai data yang sudah difilter)
+cor_matrix <- cor(counts_filtered)
+
+# 3. Tampilkan sebagai heatmap
+pheatmap(cor_matrix, 
+         main = "Korelasi Antar Sampel (Data Mentah)",
+         display_numbers = TRUE,
+         number_format = "%.2f",
+         color = colorRampPalette(c("blue", "white", "red"))(50))
+```
+Terlihat bahwa korelasi antara NC atau DMSO (sampel yang diberi cairan yang tidak berbahaya) dengan B48 atau ZL0580 cukup tinggi ($0.97$ dan$0.98$). Demikian juga korelasi antara NC atau DMSO (sampel yang diberi cairan yang tidak berbahaya) dengan JQ1 cukup tinggi ($0.94$) sedangkan korelasi antara sampel pertama NC atau DMSO dengan sample kedua NC atau DMSO tinggi $\Rightarrow$ sedikit perbedaan antara DMSO dan ZL0580. Demikian juga, perbedaan DMSO dan JQ1 adalah sedikit.
 
 
-# Judulnya
+Selanjutnya, kita akan melakukan _Principal Component Analysis_ (PCA). Terlebih dahulu, kita hitung _principal component_ ke-1 dan ke-2.
+```{r}
+# ======================================
+#   Langkah 6: PCA 
+# ======================================
+# 1. PCA dengan data yang sudah di-log (karena data counts sangat skewed)
+# log_data <- log2(counts_filtered + 1)
+# pca_result <- prcomp(t(log_data), scale=TRUE)
+
+row_var <- apply(counts_filtered, 1, var)
+counts_filtered_variable <- counts_filtered[row_var > 0, ]
+
+# Now apply log transformation and PCA
+log_data <- log2(counts_filtered_variable + 1)
+pca_result <- prcomp(t(log_data), scale = TRUE)
+
+pca_result
+pca_result[2]
+
+# 2. Buat data frame untuk plotting
+pca_df <- data.frame(
+  PC1 = pca_result$x[,1],
+  PC2 = pca_result$x[,2],
+  condition = metadata$condition
+)
+head(pca_df)
+```
+
+Kita plot _principal component_ dari 6 sampel ini. 
+```{r}
+# 3. Hitung persentase varians
+var_explained <- summary(pca_result)$importance[2,1:2]*100
+
+# 4. Plot PCA with colorblind-friendly palette
+ggplot(pca_df, aes(x=PC1, y=PC2, colour = condition)) +
+  geom_point(size=5) +
+  theme_minimal() +
+  labs( title = "PCA Plot (Data Mentah - Log2)", 
+        x = paste0("PC1: ", round(var_explained[1], 1), "% variance"),
+        y = paste0("PC2: ", round(var_explained[2], 1), "% variance")) +
+  theme(legend.position = "bottom") +
+  scale_color_brewer(palette = "Set1")  # Colorblind-friendly
+```
+Terlihat bahwa ada perbedaan antara DMSO (kontrol) dengan ZL0580 (treatment ke-1) dan JQ1 (treatment ke-2).
+
+# Mission 02: Normalization
+
+Mari kita load library-nya.
+```{r}
+# 1. Load library
+library(DESeq2)
+```
+
+Selanjutnya, kita buat `DESeq2` _object_ (dari `count matrix` dan `metadata`).  
+```{r}
+#| warning : false
+# 2. Buat DESeq2 object (dari count matrix dan metadata)
+dds <- DESeqDataSetFromMatrix(
+  countData = counts,
+  colData = metadata,
+  design = ~condition
+)
+```
+
+Kita lakukan normalisasi pada data dan simpan data hasil normalisasi yang selanjutnya akan digunakan untuk visualisasi.
+```{r}
+# 3. Mulai normalisasi
+dds <- DESeq(dds)
+
+# 4. Ambil size factors (faktor normalisasi)
+sizeFactors(dds)
+
+# 5. Ambil data yang sudah dinormalisasi
+# Data ini bisa kita gunakan untuk visualisasi (heatmap, PCA)
+rld <- rlog(dds, blind = FALSE) # -> Jika dataset kecil, karena lebih lambat
+vsd <- vst(dds, blind = FALSE)  # -> Jika dataset besar, karena lebih cepat
+```
+
+Kita visualisasi dataset dengan **Box Plot**.
+```{r}
+# =====================================
+#   Langkah 2: Persiapan Visualisasi
+# =====================================
+# 1. Ubah data normalisasi (rlog) ke format panjang
+rld_data <- assay(rld)
+rld_long <- rld_data %>%
+  as.data.frame() %>%
+  mutate(gene=rownames(.)) %>%
+  pivot_longer(cols = -gene, names_to = "sample", values_to = "expression") %>%
+  mutate(type="Data Normalisasi (rlog)")
+
+# 2. Gabungkan kedua data
+combined_data <- bind_rows(
+  counts_long %>% mutate(value = log2(count +1),
+                         type = "Data Mentah"),
+  rld_long %>% mutate(value = expression,
+                      type = "Data Normalisasi (rlog)")
+)
+
+# 3. Visualisasi dengan Boxplot
+library(ggplot2)
+ggplot(combined_data, aes(x=sample, y=value, fill = type)) +
+  geom_boxplot() +
+  facet_wrap(~type, scales="free_y", ncol=2 ) + 
+  theme_minimal() +
+  labs( title = "Perbandingan Distribusi Ekspresi Gen",
+        subtitle = "Data Mentah vs Data Normalisasi (rlog)",
+        x = "Sampel",
+        y = "Log2 Ekspresi") +
+  theme(axis.text.x = element_text(angle=45, hjust=1, size=8),
+        strip.text = element_text(face = "bold", size=10),
+        legend.position = "none")
+```
+
+Setelah dataset dinormalisasi, bentuk box plot data menjadi semakin seragam $\Rightarrow$ proses normalisasi berhasil mengurangi variasi teknis antar sampel.
+
+# Mission 03: Differential Gene Expression (DEG) Analysis
+Analisis DEG akan dibagi 2 (dua), yaitu
+1. Analisis DEG untuk ZL0580 dan DMSO dan
+2. Analisis DEG untuk JQ1 dan DMSO.
+
+## DEG Analysis antara ZL0580 dan DMSO
+
+Mari kita hitung berapa jumlah gen yang naik dan turun setelah dikenakan obat __ZL0580__. 
+```{r}
+# Mission 03 : Differential Gene Expression (DEG) Analysis
+
+# ========================================
+#    Part I : ZL0580 dan DMSO
+# ========================================
+
+# ======================
+# Langkah 1: DESeq2
+# ======================
+# 1. Membuat object dds
+dds <- DESeqDataSetFromMatrix(
+  countData = counts_filtered,
+  colData = metadata,
+  design = ~condition
+)
+
+# 2. Jalankan DESeq2
+dds <- DESeq(dds)
+dds
+
+
+# 3. Ambil hasil perbandingan
+res <- results(dds, contrast = c("condition", "ZL0580", "DMSO"))
+res <- res[order(res$padj),]
+head(res)
+
+# ======================
+# Langkah 2: Filter Gen
+# ======================
+# 1. Ubah data jadi format dataframe
+res_df <- as.data.frame(res)
+
+# 2. Tambahkan kolom status signifikansi
+res_df$significant <- ifelse(
+  !is.na(res_df$padj) & 
+    res_df$padj < 0.05 &
+    abs(res_df$log2FoldChange) > 1,
+  "Signifikan", 
+  "Tidak Signfikan"
+)
+
+# 3. Tambahkan kolom arah perubahan
+res_df$direction <- ifelse(
+  !is.na(res_df$padj) & res_df$padj < 0.05 & res_df$log2FoldChange >1, "Naik", 
+  ifelse(
+    !is.na(res_df$padj) & res_df$padj < 0.05 & res_df$log2FoldChange < -1, "Turun",
+    "Tidak Signifikan"))
+
+
+# 4. Filter gen signifikan
+sig_genes <- res_df[res_df$significant == "Signifikan",]
+nrow(sig_genes)
+
+# 5. Lihat gen naik dan turun
+table(sig_genes$direction)
+```
+
+Kita _export_ hasil sebelummya ke suatu file `csv`. 
+```{r}
+# =========================
+# Langkah 3: Export Hasil
+# =========================
+# 1. Export hasil
+write.csv(res_df, "DEG_results_GSE315344_ZL0580_vs_DMSO.csv")
+```
+
+Berikut ini adalah top 10 gen yang ekspresinya **naik**. 
+```{r}
+# 2. Lihat top 10 gen naik
+top_up <- head(res_df[res_df$direction == "Naik",c("log2FoldChange", "pvalue", "padj")], 10)
+print(top_up)
+```
+
+Berikut ini adalah top 10 gen yang ekspresinya **naik**. 
+```{r}
+# 3. Lihat top 10 gen turun
+top_down <- head(res_df[res_df$direction == "Turun", 
+                        c("log2FoldChange", "pvalue", "padj")], 10)
+print(top_down)
+```
+
+### Mission 04 : Visualization
+
+Kita ambil 10 gen yang ekspresinya paling signifikan $\Rightarrow$ padj terkecil.
+```{r}
+# Mission 04 : Visualization
+# --------------------------------------------------------
+# =========================
+# Langkah 1: Volcano Plot
+# =========================
+library(dplyr)
+library(ggplot2)
+
+# 1. Ambil 10 gen dengan padj terkecil (paling signifikan)
+top_genes <- res_df %>% 
+  filter(!is.na(padj) & padj < 0.05 & abs(log2FoldChange) > 1) %>% 
+  arrange(padj) %>%
+  head(10)
+
+# 2. Tambahkan kolom label (hanya untuk gen top)
+res_df$label <- ifelse(rownames(res_df) %in% 
+                         rownames(top_genes), rownames(res_df), "")
+
+```
+
+Kita buat volcano plot-nya.
 ```{r}
 
+# 3. Buat volcano plot dengan label
+volcano_plot_labeled <- ggplot(res_df, aes(x=log2FoldChange, y = -log10(padj), color=direction))+
+  geom_point(alpha = 0.6, size=1.5) +
+  coord_cartesian(ylim = c(0,400)) +
+  scale_color_manual(values=c("Naik" = "red", "Turun" = "blue", "Tidak signifikan"="gray" ),
+                     name="Regulasi") +
+  geom_vline(xintercept = c(-1,1), linetype="dashed", color="black", alpha=0.5) +
+  geom_hline(yintercept = -log10(0.05), linetype="dashed", color="black", alpha=0.5) +
+  geom_text(aes(label=label), vjust=-0.5, size=3, check_overlap = TRUE) +
+  labs(
+    title = "Volcano Plot: ZL0580 vs DMSO (Top 10 Gen)",
+    x = "Log2 Fold Change",
+    y = "-Log10 Adjusted P-value"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(hjust = 0.5, face="bold")
+  )
+
 ```
 
+Kita cetak volcano plot ini.
+```{r}
+print(volcano_plot_labeled)
+```
+Berikut adalah informasi mengenai volcano plot di atas.
+1. Sumbu $X$ (horizontal) = $\log_2(\text{Fold Change})$ $\Rightarrow$ seberapa besar perubahan ekspresi gen (naik  ke kanan, turun ke kiri).
+2. Sumbu $Y$ (vertikal) = $\log_{10}$ Adjusted $p$-value $\Rightarrow$ seberapa signifikan perubahannya (semakin ke atas, semakin signifikan).
+3. Setiap titik adalah satu gen. 
+   - Titik merah adalah _up-regulated genes_. 
+   - Titik biru adalah _down-regulated genes_. 
+   - Titik abu-abu adalah gen yang tidak mengalami perubahan ekspresi. 
+4. Garis vertikal putus-putus = $\log_2(\text{Fold Change}) = \pm1$. Batas perubahan minimal ($2 \times$ lipat).
+5. Garis horizontal putus-putus = $-\log_{10}(0.05)$. Batas signifikansi (padj < 0.05).
+    
+Kita simpan plot ini ke suatu file.
+```{r}
+ggsave("volcano_plot_labeled_ZL0580_vs_DMSO.png", volcano_plot_labeled, width = 10, 
+       height = 7, dpi = 300)
+```
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+Terakhir, kita siapkan data dengan mengambil 30 gen yang paling signifikan beserta data ekspresinya. 
+```{r}
+# =========================
+# Langkah 2: Heatmap
+# =========================
+library(pheatmap)
+library(DESeq2)
 
-## Running Code
+# 1. Ambil top 30 gen signifikan (berdasarkan padj)
+res_sorted <- res[order(res$padj),]
+top_genes <- rownames(res_sorted)[!is.na(res_sorted$padj)][1:30]
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+# 2. Ambil data ekspresi untuk gen-gen tersebut (dari rlog)
+heatmap_data <- assay(rld)[top_genes,]
+
+# 3. Buat annotation untuk sampel (warna berdasarkan kondisi)
+annotation_col <- data.frame(
+  Condition = metadata$condition
+)
+rownames(annotation_col) <- colnames(heatmap_data)
+```
+
+Finally, kita plot _heatmap_-nya. 
+```{r}
+# 4. Buat heatmap
+heatmap_plot <- pheatmap(
+  heatmap_data,
+  scale = "row",
+  main = "Heatmap Top 30 DEG",
+  clustering_distance_rows = "correlation",
+  clustering_distance_cols = "correlation",
+  clustering_method = "complete",
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 6,
+  fontsize_col = 8,
+  annotation_col = annotation_col,
+  color = colorRampPalette(c("blue", "white", "red"))(50),
+  border_color = NA
+)
+```
+
 
 ```{r}
-1 + 1
-```
+# ========================================
+#    Part II : JQ1 dan DMSO
+# ========================================
 
-You can add options to executable code like this
+# ======================
+# Langkah 1: DESeq2
+# ======================
+# 1. Membuat object dds
+dds <- DESeqDataSetFromMatrix(
+  countData = counts_filtered,
+  colData = metadata,
+  design = ~condition
+)
+
+# 2. Jalankan DESeq2
+dds <- DESeq(dds)
+dds
+
+
+# 3. Ambil hasil perbandingan
+res <- results(dds, contrast = c("condition", "JQ1", "DMSO"))
+res <- res[order(res$padj),]
+head(res)
+
+# ======================
+# Langkah 2: Filter Gen
+# ======================
+# 1. Ubah data jadi format dataframe
+res_df <- as.data.frame(res)
+
+# 2. Tambahkan kolom status signifikansi
+res_df$significant <- ifelse(
+  !is.na(res_df$padj) & 
+    res_df$padj < 0.05 &
+    abs(res_df$log2FoldChange) > 1,
+  "Signifikan", 
+  "Tidak Signfikan"
+)
+
+# 3. Tambahkan kolom arah perubahan
+res_df$direction <- ifelse(
+  !is.na(res_df$padj) & res_df$padj < 0.05 & res_df$log2FoldChange >1, "Naik", 
+  ifelse(
+    !is.na(res_df$padj) & res_df$padj < 0.05 & res_df$log2FoldChange < -1, "Turun",
+    "Tidak Signifikan"))
+
+
+# 4. Filter gen signifikan
+sig_genes <- res_df[res_df$significant == "Signifikan",]
+nrow(sig_genes)
+
+# 5. Lihat gen naik dan turun
+table(sig_genes$direction)
+```
 
 ```{r}
-#| echo: false
-2 * 2
-```
+# =========================
+# Langkah 3: Export Hasil
+# =========================
+# 1. Export hasil
+write.csv(res_df, "DEG_results_GSE315344_JQ1_vs_DMSO.csv")
 
-The `echo: false` option disables the printing of code (only output is displayed).
+# 2. Lihat top 10 gen naik
+top_up <- head(res_df[res_df$direction == "Naik",c("log2FoldChange", "pvalue", "padj")], 10)
+print(top_up)
+
+  
+# 3. Lihat top 10 gen turun
+top_down <- head(res_df[res_df$direction == "Turun", 
+                        c("log2FoldChange", "pvalue", "padj")], 10)
+print(top_down)
+```

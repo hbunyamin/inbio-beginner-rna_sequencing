@@ -25,6 +25,7 @@ getGEOSuppFiles("GSE285595")
 #   Langkah 2: Data Cleaning
 # ===============================
 # 1. Ambil data ekspresi dan metadata dari series matrix
+exprs(gse[[1]]) 
 gse_data <- gse[[1]]
 gse_data
 expression_data <-exprs(gse_data)
