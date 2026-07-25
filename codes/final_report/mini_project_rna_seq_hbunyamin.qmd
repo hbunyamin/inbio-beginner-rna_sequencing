@@ -2,6 +2,7 @@
 title: "Analisis Differential Expression dari GSE315344"
 subtitle: "Respons Transkriptomik terhadap ZL0580 dan JQ1 dalam Sel J-Lat"
 author: "Hendra Bunyamin"
+date: today
 format: pdf
 editor: visual
 execute: 
@@ -26,6 +27,7 @@ library(tidyr)
 library(readxl)
 ```
 
+# Virus HIV dan Dua Cara Membasminya
 Bayangkan virus *human immunodeficiency* (HIV) sebagai penjahat berbahaya yang telah menyusup ke dalam sebuah rumah--dalam hal ini, sel-sel tubuh. Biasanya, sistem kekebalan bertindak seperti pasukan keamanan yang waspada, yang mampu mendeteksi dan melenyapkan penyerang semacam itu. Namun, HIV memiliki trik yang sangat licik: ia bisa masuk ke "mode sembunyi". Setelah menginfeksi sel, virus ini menyisipkan instruksi genetiknya langsung ke dalam DNA sel inang, secara efektif menyimpan cetak birunya ke dalam perpustakaan pusat sel tersebut. Begitu berada di sana, virus ini menjadi sepenuhnya diam--tidak memproduksi protein virus, tidak membuat salinan dirinya sendiri, dan tidak memicu alarm apa pun. Virus tersebut masih ada, bersembunyi di dalam genom, tetapi tetap tidak terlihat oleh sistem kekebalan tubuh maupun obat antivirus standar. Keadaan diam dan tidak aktif ini dikenal sebagai **laten virus**, dan hal ini merupakan tantangan terbesar dalam upaya memberantas HIV dari tubuh.
 
 Para ilmuwan sedang berusaha menemukan obat untuk HIV, tetapi mereka tidak bisa begitu saja membasmi virus yang tersembunyi itu karena mereka tidak bisa menemukannya. Terdapat dua strategi utama untuk membasmi virus yang tersembunyi ini, yaitu:
@@ -33,6 +35,7 @@ Para ilmuwan sedang berusaha menemukan obat untuk HIV, tetapi mereka tidak bisa 
 - "*Shock and kill*" $\Rightarrow$ membangunkan virus agar sistem kekebalan tubuh atau obat-obatan dapat mendeteksinya dan menghancurkannya.
 - "*Block and lock*" $\Rightarrow$ menjaga agar virus tetap tertidur selamanya, sehingga tidak akan pernah bangun lagi untuk menimbulkan masalah.
 
+# Latar Belakang Dataset GSE315344  
 Dalam percobaan ini ([GSE315344](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE315344)), para ilmuwan meneliti dua obat berbeda yang memengaruhi HIV dengan cara yang berlawanan:
 
 - **JQ1** $\Rightarrow$ Obat ini berfungsi seperti "panggilan bangun". Obat ini memaksa HIV yang tersembunyi untuk mengaktifkan gen-gennya dan mulai membuat salinan dirinya sendiri. Hal ini berguna untuk strategi "*shock and kill*".
@@ -49,18 +52,31 @@ Berikut ini yang dilakukan para ilmuwan dalam percobaan ([GSE315344](https://www
      
 Setelah 24 jam, mereka menggunakan mesin berteknologi tinggi untuk membaca setiap gen aktif dalam sel-sel tersebut. Ini seperti mengambil foto instan dari "halaman" mana dalam buku petunjuk sel yang sedang dibaca pada saat itu. Proses ini disebut sekuensing RNA (**RNA sequencing**). 
 
+# Tujuan Proyek ini
 Tujuan proyek ini adalah menganalisis **RNA sequencing** pada dataset genomik dengan kode [GSE315344](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE315344). Analisis ini mencakup beberapa langkah (_mission_), yaitu:
 
-1. _Data preparation_
-2. _Normalization_
-3. _Differential Gene Expression (DEG) Analysis_
-4. _Visualization_
 
-# Mission 01: Data Preparation
+# Metode yang Digunakan
+Metode yang digunakan dalam proyek ini terdiri dari 4 (empat) langkah, yaitu:
+1. _Data preparation_ $\Rightarrow$ 
+   a. Source: GEO Dataset GSE315344
+   b. Model: jenis sel manusia spesifik mengandung HIV yang tersembunyi dan dalam keadaan tidak aktif (**J-Lat**)
+   c. Cohorts: 2x Control (DMSO) vs. 2x Treated (ZL0580) vs. 2x Treated (JQ1) 
+2. _Filtering & Normalization_ $\Rightarrow$
+   a. Environment: R
+   b. Engine: DESeq2 package
+3. _Differential Gene Expression (DEG) Analysis_ $\Rightarrow$
+   a. Threshold 1: $|\log_2{\text{FC}}| > 1$ (Minimum $3 \times$ change)
+   b. Threshold 2: Adjusted p-value $< 0.05$
+4. _Visualization_ $\Rightarrow$
+   a. Tools: ggplot2, pheatmap, dplyr
+
+Mari kita mulai langkah per langkah.
+
+## Mission 01: Data Preparation
 
 Mari kita baca data _raw counts_ dan kita simpan ke variabel `counts`.
 ```{r}
-# Read the file 'GSE315344_counts.xlsx' from your working directory
 counts <- read_excel("GSE315344_raw_counts.xlsx")
 counts <- as.data.frame(counts)
 ```
@@ -75,11 +91,9 @@ dim(counts)
    
 Selanjutnya, mari kita buat metadata dari dataset ini.   
 ```{r}
-# ==================================
-#  Langkah 3: Membuat Metadata
-# ==================================
 sample_names <- colnames(counts)
 sample_names
+# Jumlah sampel kita adalah 6
 condition <- c("DMSO", "DMSO", "ZL0580", "ZL0580", "JQ1", "JQ1" )
 
 metadata <- data.frame(
@@ -118,9 +132,6 @@ ggplot(counts_long, aes(x=sample, y=log2(count+1), fill = sample)) +
 
 Mari kita coba filter gen dengan <u>jumlah reads yang rendah</u> dan bandingkan sebelum dan sesudah filter.
 ```{r}
-# ===================================================
-#   Filter Gen dengan Reads Rendah (Optional)
-# ===================================================
 # 1. Filter: gen dengan total reads >= 10 di semua sampel
 keep <- rowSums(counts) >= 10
 counts_filtered <- counts[keep,]
@@ -132,9 +143,6 @@ dim(counts_filtered)
 
 Selanjutnya kita coba hitung korelasi antar sampel.
 ```{r}
-# ======================================
-#   Langkah 5: Korelasi Antar Sampel
-# ======================================
 # 1. Load pheatmap
 library(pheatmap)
 
@@ -193,8 +201,7 @@ ggplot(pca_df, aes(x=PC1, y=PC2, colour = condition)) +
 ```
 Terlihat bahwa ada perbedaan antara DMSO (kontrol) dengan ZL0580 (treatment ke-1) dan JQ1 (treatment ke-2).
 
-# Mission 02: Normalization
-
+## Mission 02: Normalization
 Mari kita load library-nya.
 ```{r}
 # 1. Load library
@@ -228,9 +235,6 @@ vsd <- vst(dds, blind = FALSE)  # -> Jika dataset besar, karena lebih cepat
 
 Kita visualisasi dataset dengan **Box Plot**.
 ```{r}
-# =====================================
-#   Langkah 2: Persiapan Visualisasi
-# =====================================
 # 1. Ubah data normalisasi (rlog) ke format panjang
 rld_data <- assay(rld)
 rld_long <- rld_data %>%
@@ -264,24 +268,15 @@ ggplot(combined_data, aes(x=sample, y=value, fill = type)) +
 
 Setelah dataset dinormalisasi, bentuk box plot data menjadi semakin seragam $\Rightarrow$ proses normalisasi berhasil mengurangi variasi teknis antar sampel.
 
-# Mission 03: Differential Gene Expression (DEG) Analysis
+## Mission 03: Differential Gene Expression (DEG) Analysis
 Analisis DEG akan dibagi 2 (dua), yaitu
 1. Analisis DEG untuk ZL0580 dan DMSO dan
 2. Analisis DEG untuk JQ1 dan DMSO.
 
-## DEG Analysis antara ZL0580 dan DMSO
+### DEG Analysis antara ZL0580 dan DMSO
 
 Mari kita hitung berapa jumlah gen yang naik dan turun setelah dikenakan obat __ZL0580__. 
 ```{r}
-# Mission 03 : Differential Gene Expression (DEG) Analysis
-
-# ========================================
-#    Part I : ZL0580 dan DMSO
-# ========================================
-
-# ======================
-# Langkah 1: DESeq2
-# ======================
 # 1. Membuat object dds
 dds <- DESeqDataSetFromMatrix(
   countData = counts_filtered,
@@ -293,15 +288,12 @@ dds <- DESeqDataSetFromMatrix(
 dds <- DESeq(dds)
 dds
 
-
 # 3. Ambil hasil perbandingan
 res <- results(dds, contrast = c("condition", "ZL0580", "DMSO"))
 res <- res[order(res$padj),]
 head(res)
 
-# ======================
-# Langkah 2: Filter Gen
-# ======================
+# Selanjutnya, kita akan melakukan filter gen
 # 1. Ubah data jadi format dataframe
 res_df <- as.data.frame(res)
 
@@ -321,7 +313,6 @@ res_df$direction <- ifelse(
     !is.na(res_df$padj) & res_df$padj < 0.05 & res_df$log2FoldChange < -1, "Turun",
     "Tidak Signifikan"))
 
-
 # 4. Filter gen signifikan
 sig_genes <- res_df[res_df$significant == "Signifikan",]
 nrow(sig_genes)
@@ -332,9 +323,6 @@ table(sig_genes$direction)
 
 Kita _export_ hasil sebelummya ke suatu file `csv`. 
 ```{r}
-# =========================
-# Langkah 3: Export Hasil
-# =========================
 # 1. Export hasil
 write.csv(res_df, "DEG_results_GSE315344_ZL0580_vs_DMSO.csv")
 ```
@@ -354,12 +342,10 @@ top_down <- head(res_df[res_df$direction == "Turun",
 print(top_down)
 ```
 
-### Mission 04 : Visualization
+#### Mission 04 : Visualisasi dari ZL0580 dan DMSO
 
 Kita ambil 10 gen yang ekspresinya paling signifikan $\Rightarrow$ padj terkecil.
 ```{r}
-# Mission 04 : Visualization
-# --------------------------------------------------------
 # =========================
 # Langkah 1: Volcano Plot
 # =========================
@@ -384,7 +370,8 @@ Kita buat volcano plot-nya.
 # 3. Buat volcano plot dengan label
 volcano_plot_labeled <- ggplot(res_df, aes(x=log2FoldChange, y = -log10(padj), color=direction))+
   geom_point(alpha = 0.6, size=1.5) +
-  coord_cartesian(ylim = c(0,400)) +
+#  coord_cartesian(ylim = c(0,400)) +
+  coord_cartesian(ylim = c(0, max(-log10(res_df$padj), na.rm=TRUE) + 10)) +
   scale_color_manual(values=c("Naik" = "red", "Turun" = "blue", "Tidak signifikan"="gray" ),
                      name="Regulasi") +
   geom_vline(xintercept = c(-1,1), linetype="dashed", color="black", alpha=0.5) +
@@ -445,6 +432,8 @@ annotation_col <- data.frame(
 rownames(annotation_col) <- colnames(heatmap_data)
 ```
 
+
+
 Finally, kita plot _heatmap_-nya. 
 ```{r}
 # 4. Buat heatmap
@@ -466,6 +455,11 @@ heatmap_plot <- pheatmap(
 ```
 
 
+
+
+
+
+# ==================================================
 <!-- ```{r} -->
 <!-- # ======================================== -->
 <!-- #    Part II : JQ1 dan DMSO -->
