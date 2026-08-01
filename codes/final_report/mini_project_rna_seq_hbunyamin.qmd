@@ -15,7 +15,7 @@ execute:
 ---
 
 # Virus HIV dan Dua Cara Membasminya
-Bayangkan virus *human immunodeficiency* (HIV) sebagai penjahat berbahaya yang telah menyusup ke dalam sebuah rumah--dalam hal ini, sel-sel tubuh. Biasanya, sistem kekebalan bertindak seperti pasukan keamanan yang waspada, yang mampu mendeteksi dan melenyapkan penyerang semacam itu. Namun, HIV memiliki trik yang sangat licik: ia bisa masuk ke "mode sembunyi". Setelah menginfeksi sel, virus ini menyisipkan instruksi genetiknya langsung ke dalam DNA sel inang, secara efektif menyimpan cetak birunya ke dalam perpustakaan pusat sel tersebut. Begitu berada di sana, virus ini menjadi sepenuhnya diam $\Rightarrow$ tidak memproduksi protein virus, tidak membuat salinan dirinya sendiri, dan tidak memicu alarm apa pun. Virus tersebut masih ada, bersembunyi di dalam genom, tetapi tetap tidak terlihat oleh sistem kekebalan tubuh maupun obat antivirus standar. Keadaan diam dan tidak aktif ini dikenal sebagai **laten virus**, dan hal ini merupakan tantangan terbesar dalam upaya memberantas HIV dari tubuh.
+Bayangkan virus *human immunodeficiency* (HIV) sebagai penjahat berbahaya yang telah menyusup ke dalam sebuah rumah, dalam hal ini, sel-sel tubuh. Biasanya, sistem kekebalan bertindak seperti pasukan keamanan yang waspada, yang mampu mendeteksi dan melenyapkan penyerang semacam itu. Namun, HIV memiliki trik yang sangat licik: ia bisa masuk ke "_mode sembunyi_". Setelah menginfeksi sel, virus ini menyisipkan instruksi genetiknya langsung ke dalam DNA sel inang, secara efektif menyimpan cetak birunya ke dalam perpustakaan pusat sel (baca: DNA) tersebut. Begitu berada di sana, virus ini menjadi sepenuhnya diam $\Rightarrow$ tidak memproduksi protein virus, tidak membuat salinan dirinya sendiri, dan tidak memicu alarm apa pun. Virus tersebut masih ada, bersembunyi di dalam genom, tetapi tetap tidak terlihat oleh sistem kekebalan tubuh maupun obat antivirus standar. Keadaan diam dan tidak aktif ini dikenal sebagai **laten virus**, dan hal ini merupakan tantangan terbesar dalam upaya memberantas HIV dari tubuh.
 
 Para ilmuwan sedang berusaha menemukan obat untuk HIV, tetapi mereka tidak bisa begitu saja membasmi virus yang tersembunyi itu karena mereka tidak bisa menemukannya. Terdapat dua strategi utama untuk membasmi virus yang tersembunyi ini, yaitu:
 
@@ -23,15 +23,15 @@ Para ilmuwan sedang berusaha menemukan obat untuk HIV, tetapi mereka tidak bisa 
 - "*Block and lock*" $\Rightarrow$ menjaga agar virus tetap tertidur selamanya, sehingga tidak akan pernah bangun lagi untuk menimbulkan masalah.
 
 # Latar Belakang Dataset GSE315344  
-Dataset yang digunakan dalam percobaan ini adalah [GSE315344](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE315344) [@kumar2026mechanistic]. Para ilmuwan meneliti dua obat berbeda yang memengaruhi HIV dengan cara yang berlawanan, yaitu:
+Dataset yang digunakan dalam percobaan ini adalah [GSE315344](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE315344) [@kumar2026mechanistic]. Dataset ini merupakan hasil penelitian dua obat berbeda yang memengaruhi HIV dengan cara yang berlawanan, yaitu:
 
 - **JQ1** $\Rightarrow$ Obat ini berfungsi seperti "panggilan bangun" (_wake up call_). Obat ini memaksa HIV yang tersembunyi untuk mengaktifkan gen-gennya dan mulai membuat salinan dirinya sendiri. Hal ini berguna untuk strategi "*shock and kill*".
 
-- **ZL0580** $\Rightarrow$ Obat ini bekerja sebaliknya. Obat ini bertindak seperti "obat tidur". Obat ini mendorong virus untuk tetap tertidur lelap dan membuatnya jauh lebih sulit bagi virus untuk bangun kembali. Hal ini berguna untuk strategi "block and lock".
+- **ZL0580** $\Rightarrow$ Obat ini bekerja sebaliknya. Obat ini bertindak seperti "obat tidur". Obat ini mendorong virus untuk tetap tertidur lelap dan membuatnya jauh lebih sulit bagi virus untuk bangun kembali. Hal ini berguna untuk strategi "_block and lock_".
 
-Berikut ini yang dilakukan para ilmuwan dalam percobaan ([GSE315344](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE315344)) ini:
+Berikut ini adalah apa yang dilakukan oleh para ilmuwan dalam percobaan ([GSE315344](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE315344)) ini:
 
-- Mereka mengambil jenis sel manusia spesifik mengandung HIV yang tersembunyi dan dalam keadaan tidak aktif ke dalam cawan laboratorium. Jenis sel ini disebut <u>J-Lat</u>.    
+- Mereka mengambil jenis sel manusia spesifik mengandung HIV yang tersembunyi dan dalam keadaan tidak aktif ke dalam cawan laboratorium. Jenis sel ini disebut [J-Lat]{.underline}.    
 - Mereka membagi sel-sel ini menjadi tiga kelompok:
     - Kelompok 1 diberi cairan yang tidak berbahaya (**DMSO**) $\Rightarrow$ ini adalah kelompok pembanding yang "tidak diberi perlakuan apa pun".
     - Kelompok 2 diberi obat pengaktif (**JQ1**).
@@ -55,7 +55,7 @@ Metode yang digunakan dalam proyek ini terdiri dari 4 (empat) langkah, yaitu:
 2. _Filtering & Normalization_ $\Rightarrow$            
      
     a. Environment: R             
-    b. Engine: DESeq2 package      
+    b. Engine: `DESeq2` package      
       
 3. _Differential Gene Expression (DEG) Analysis_ $\Rightarrow$               
      
@@ -64,7 +64,7 @@ Metode yang digunakan dalam proyek ini terdiri dari 4 (empat) langkah, yaitu:
              
 4. _Visualization_ $\Rightarrow$                  
      
-    a. Tools: ggplot2, pheatmap, dplyr               
+    a. Tools: `ggplot2`, `pheatmap`, `dplyr`               
 
 Analisis ini mencakup beberapa langkah (_mission_). Mari kita mulai langkah per langkah.
 
@@ -105,7 +105,7 @@ Pastikan bahwa nama-nama sampel dari `counts` dan `metadata` adalah sama.
 colnames(counts) == rownames(metadata)
 ```
 
-Kemudian kita akan mendistribusikan data-data ini dalam diagram box plot.
+Kemudian kita akan mendistribusikan data-data ini dalam diagram _box plot_.
 ```{r}
 #| echo: False
 #| fig-pos: 'H'
@@ -128,7 +128,7 @@ ggplot(counts_long, aes(x=sample, y=log2(count+1), fill = sample)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-Mari kita coba filter gen dengan <u>jumlah reads yang rendah</u> dan bandingkan sebelum dan sesudah filter.
+Mari kita coba filter gen dengan [jumlah reads yang rendah]{.underline} dan bandingkan sebelum dan sesudah filter.
 ```{r}
 # 1. Filter: gen dengan total reads >= 10 di semua sampel
 keep <- rowSums(counts) >= 10
@@ -157,7 +157,7 @@ pheatmap(cor_matrix,
          number_format = "%.2f",
          color = colorRampPalette(c("blue", "white", "red"))(50))
 ```
-Terlihat bahwa korelasi antara NC atau DMSO (sampel yang diberi cairan yang tidak berbahaya) dengan B48 atau ZL0580 cukup tinggi ($0.97$ dan$0.98$). Demikian juga korelasi antara NC atau DMSO (sampel yang diberi cairan yang tidak berbahaya) dengan JQ1 cukup tinggi ($0.94$) sedangkan korelasi antara sampel pertama NC atau DMSO dengan sample kedua NC atau DMSO tinggi $\Rightarrow$ sedikit perbedaan antara DMSO dan ZL0580. Demikian juga, perbedaan DMSO dan JQ1 adalah sedikit. Selanjutnya, dendrogram di atas dan samping heatmap juga menampilkan pemisahan yang jelas antara kelompok treatment dan kelompok kontrol. 
+Terlihat bahwa korelasi antara NC atau DMSO (sampel yang diberi cairan yang tidak berbahaya) dengan B48 atau ZL0580 cukup tinggi ($0.97$ dan$0.98$). Demikian juga korelasi antara NC atau DMSO (sampel yang diberi cairan yang tidak berbahaya) dengan JQ1 cukup tinggi ($0.94$) sedangkan korelasi antara sampel pertama NC atau DMSO dengan sample kedua NC atau DMSO tinggi $\Rightarrow$ sedikit perbedaan antara DMSO dan ZL0580. Demikian juga, perbedaan DMSO dan JQ1 adalah sedikit. Selanjutnya, dendrogram di atas dan samping heatmap juga menampilkan [pemisahan yang jelas]{.underline} antara kelompok treatment dan kelompok kontrol. 
 
 
 Selanjutnya, kita akan melakukan _Principal Component Analysis_ (PCA). Terlebih dahulu, kita hitung _principal component_ ke-1 dan ke-2.
@@ -262,7 +262,7 @@ ggplot(combined_data, aes(x=sample, y=value, fill = type)) +
   facet_wrap(~type, scales="free_y", ncol=2 ) + 
   theme_minimal() +
   labs( title = "Perbandingan Distribusi Ekspresi Gen",
-        subtitle = "Data Mentah vs Data Normalisasi (rlog)",
+        subtitle = "Data Mentah vs. Data Normalisasi (rlog)",
         x = "Sampel",
         y = "Log2 Ekspresi") +
   theme(axis.text.x = element_text(angle=45, hjust=1, size=8),
@@ -270,7 +270,7 @@ ggplot(combined_data, aes(x=sample, y=value, fill = type)) +
         legend.position = "none")
 ```
 
-Setelah dataset dinormalisasi, bentuk box plot data menjadi semakin seragam $\Rightarrow$ proses normalisasi berhasil mengurangi variasi teknis antar sampel.
+Setelah dataset dinormalisasi, bentuk _box plot_ data menjadi semakin seragam $\Rightarrow$ proses normalisasi berhasil mengurangi variasi teknis antar sampel.
 
 ## Mission 03: Differential Gene Expression (DEG) Analysis
 Analisis DEG akan dibagi 2 (dua), yaitu      
@@ -323,7 +323,7 @@ nrow(sig_genes)
 # 5. Lihat gen naik dan turun
 table(sig_genes$direction)
 ```
-Total jumlah gen yang differently expressed adalah $297$ yang menunjukkan bahwa ZL0580 mempunyai efek yang luas. 
+Total jumlah gen yang _differently expressed_ adalah $297$ yang menunjukkan bahwa ZL0580 mempunyai efek yang cukup luas bila dilihat dari jumlah gen-nya. 
 ```{r}
 63 + 234
 ```
@@ -523,7 +523,7 @@ nrow(sig_genes)
 # 5. Lihat gen naik dan turun
 table(sig_genes$direction)
 ```
-Total jumlah gen yang differently expressed adalah $2685$ yang menunjukkan bahwa JQ1 mempunyai efek yang cukup luas, yaitu sampai menjangkau $2685$ gen. 
+Total jumlah gen yang _differently expressed_ adalah $2685$ yang menunjukkan bahwa JQ1 mempunyai efek yang cukup luas, yaitu sampai menjangkau $2685$ gen. 
 ```{r}
 828 + 1857
 ```
@@ -683,15 +683,15 @@ Selanjutnya, @fig-volcano-plot-2 merupakan volcano plot untuk JQ1 dan DMSO yang 
 
 : Perbandingan dua analisis DEGs yang sudah dilakukan {#tbl-perbandingan}
   
-**`ZL0580` merupakan pendekatan yang lebih efektif dalam menekan HIV**. `ZL0580` secara selektif menargetkan BRD4 BD1 (lihat @tbl-perbandingan) sehingga obat ini menghindari penekanan sistem kekebalan tubuh yang meluas seperti yang terjadi pada JQ1; akibatnya, obat ini berpotensi mengurangi efek samping sekaligus tetap mampu menekan HIV.
+**ZL0580 merupakan pendekatan yang lebih efektif dalam menekan HIV**. ZL0580 secara selektif menargetkan BRD4 BD1 (lihat @tbl-perbandingan) sehingga obat ini menghindari penekanan sistem kekebalan tubuh yang meluas seperti yang terjadi pada JQ1; akibatnya, obat ini berpotensi mengurangi efek samping sekaligus tetap mampu menekan HIV.
    
-# Conclusion
-Analisis `ZL0580` dan `JQ1` terhadap `DMSO` menunjukkan pola transkriptomik yang sangat bertolak belakang, yang sejalan dengan efek berlawanan keduanya terhadap transkripsi HIV, yaitu:     
+# Kesimpulan
+Analisis ZL0580 dan JQ1 terhadap DMSO menunjukkan pola transkriptomik yang sangat bertolak belakang, yang sejalan dengan efek berlawanan keduanya terhadap transkripsi HIV, yaitu:     
 
-1. `ZL0580` memicu respons yang terarah dan selektif, terutama dengan menghambat biosintesis kolesterol sekaligus memicu respons stres seluler. Hal ini memperkuat perannya sebagai agen "_block and lock_" dengan efek samping di luar target yang lebih sedikit.          
-2. `JQ1` memicu respons yang luas, menekan fungsi kekebalan, adhesi sel, dan metabolisme. Hal ini menegaskan perannya sebagai agen "_shock and kill_" yang ampuh namun tidak selektif, yang mampu mengaktifkan kembali HIV namun memiliki dampak luas terhadap biologi sel inang.
+1. ZL0580 memicu respons yang terarah dan selektif, terutama dengan menghambat biosintesis kolesterol sekaligus memicu respons stres seluler. Hal ini memperkuat perannya sebagai agen "_block and lock_" dengan efek samping di luar target yang lebih sedikit.          
+2. JQ1 memicu respons yang luas, menekan fungsi kekebalan, adhesi sel, dan metabolisme. Hal ini menegaskan perannya sebagai agen "_shock and kill_" yang ampuh namun tidak selektif. Maksudnya adalah JQ1 mampu mengaktifkan kembali HIV namun memiliki dampak luas terhadap biologi sel inang.
    
-Jadi **`ZL0580` muncul sebagai kandidat terapi yang lebih menjanjikan untuk strategi penyembuhan HIV, karena mampu menekan HIV secara efektif dengan profil transkriptomik yang lebih terfokus dan berpotensi lebih aman dibandingkan dengan `JQ1`**.    
+Jadi **ZL0580 muncul sebagai kandidat terapi yang lebih menjanjikan untuk strategi penyembuhan HIV, karena mampu menekan HIV secara efektif dengan profil transkriptomik yang lebih terfokus dan berpotensi lebih aman dibandingkan dengan JQ1**.    
     
 # Daftar Pustaka
 
